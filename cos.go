@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -29,13 +30,23 @@ type (
 		Exclude     string
 	}
 
+	Ext struct {
+		AutoTime   bool
+		TimeFormat string
+		Debug      bool
+		Pause      bool
+		Proxy      string
+	}
+
 	Plugin struct {
 		Cos Cos
+		Ext Ext
 	}
 )
 
 // Exec executes the plugin step
 func (p Plugin) Exec() error {
+	p.upload()
 	return nil
 }
 
@@ -44,9 +55,15 @@ func (p Plugin) upload() {
 		// StorageClass: storageClass,
 		// RateLimiting: rateLimiting,
 		// PartSize:     partSize,
-		ThreadNum:    10,
+		ThreadNum: 10,
+	}
+	if p.Cos.Endpoint == "" {
+		p.Cos.Endpoint = fmt.Sprintf("cos.%s.myqcloud.com", p.Cos.Region)
 	}
 	c := CreateClient(p.Cos.AccessKey, p.Cos.SecretKey, p.Cos.Endpoint, p.Cos.Bucket)
+	if p.Ext.AutoTime {
+		p.Cos.Target = fmt.Sprintf("%s/%s", strings.TrimSuffix(p.Cos.Target, "/"), time.Now().Format(p.Ext.TimeFormat))
+	}
 	MultiUpload(c, p.Cos.Source, p.Cos.Bucket, p.Cos.Target, p.Cos.Include, p.Cos.Exclude, op)
 }
 
@@ -99,13 +116,13 @@ type UploadOptions struct {
 	ThreadNum    int
 }
 
-func UploadPathFixed(localPath string, cosPath string) (string, string) {
+func UploadPathFixed(localPath string, targetPath string) (string, string) {
 	// eg:~/example/123.txt => cos://bucket/path/123.txt
 	// 0. ~/example/123.txt => cos://bucket
-	if cosPath == "" {
+	if targetPath == "" {
 		pathList := strings.Split(localPath, "/")
 		fileName := pathList[len(pathList)-1]
-		cosPath = fileName
+		targetPath = fileName
 	}
 	// 1. ~/example/123.txt => cos://bucket/path/
 	s, err := os.Stat(localPath)
@@ -116,7 +133,7 @@ func UploadPathFixed(localPath string, cosPath string) (string, string) {
 	if s.IsDir() {
 		fileNames := strings.Split(localPath, "/")
 		fileName := fileNames[len(fileNames)-1]
-		cosPath = cosPath + fileName
+		targetPath = targetPath + fileName
 	}
 	// 2. 123.txt => cos://bucket/path/
 	if !filepath.IsAbs(localPath) {
@@ -127,9 +144,9 @@ func UploadPathFixed(localPath string, cosPath string) (string, string) {
 		}
 		localPath = dirPath + "/" + localPath
 	}
-	return localPath, cosPath
+	return localPath, targetPath
 }
-func SingleUpload(c *cos.Client, localPath, bucketName, cosPath string, op *UploadOptions) {
+func SingleUpload(c *cos.Client, sourcePath, bucketName, targetPath string, op *UploadOptions) {
 	opt := &cos.MultiUploadOptions{
 		OptIni: &cos.InitiateMultipartUploadOptions{
 			ACLHeaderOptions: &cos.ACLHeaderOptions{
@@ -167,37 +184,37 @@ func SingleUpload(c *cos.Client, localPath, bucketName, cosPath string, op *Uplo
 		CheckPoint:     true,
 		// EnableVerification: false,
 	}
-	localPath, cosPath = UploadPathFixed(localPath, cosPath)
-	logrus.Infof("Upload %s => cos://%s/%s\n", localPath, bucketName, cosPath)
-	_, _, err := c.Object.Upload(context.Background(), cosPath, localPath, opt)
+	sourcePath, targetPath = UploadPathFixed(sourcePath, targetPath)
+	logrus.Infof("Upload %s => cos://%s/%s\n", sourcePath, bucketName, targetPath)
+	_, _, err := c.Object.Upload(context.Background(), targetPath, sourcePath, opt)
 	if err != nil {
 		logrus.Fatalln(err)
 		os.Exit(1)
 	}
 }
 
-func MultiUpload(c *cos.Client, localDir, bucketName, cosDir, include, exclude string, op *UploadOptions) {
-	if localDir != "" && (localDir[len(localDir)-1] != '/' && localDir[len(localDir)-1] != '\\') {
-		localDir += "/"
+func MultiUpload(c *cos.Client, sourceDir, bucketName, targetDir, include, exclude string, op *UploadOptions) {
+	if sourceDir != "" && (sourceDir[len(sourceDir)-1] != '/' && sourceDir[len(sourceDir)-1] != '\\') {
+		sourceDir += "/"
 	}
-	if cosDir != "" && cosDir[len(cosDir)-1] != '/' {
-		cosDir += "/"
+	if targetDir != "" && targetDir[len(targetDir)-1] != '/' {
+		targetDir += "/"
 	}
 
-	files := GetLocalFilesListRecursive(localDir, include, exclude)
+	files := GetLocalFilesListRecursive(sourceDir, include, exclude)
 
 	for _, f := range files {
-		localPath := localDir + f
-		cosPath := cosDir + f
+		sourcePath := sourceDir + f
+		targetPath := targetDir + f
 
-		SingleUpload(c, localPath, bucketName, cosPath, op)
+		SingleUpload(c, sourcePath, bucketName, targetPath, op)
 	}
 }
 
-func GetLocalFilesListRecursive(localPath string, include string, exclude string) (files []string) {
+func GetLocalFilesListRecursive(sourcePath string, include string, exclude string) (files []string) {
 	// bfs遍历文件夹
 	var dirs []string
-	dirs = append(dirs, localPath)
+	dirs = append(dirs, sourcePath)
 	for len(dirs) > 0 {
 		dirName := dirs[0]
 		dirs = dirs[1:]
@@ -213,7 +230,7 @@ func GetLocalFilesListRecursive(localPath string, include string, exclude string
 			if f.IsDir() {
 				dirs = append(dirs, fileName)
 			} else {
-				fileName = fileName[len(localPath)+1:]
+				fileName = fileName[len(sourcePath)+1:]
 				files = append(files, fileName)
 			}
 		}

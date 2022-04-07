@@ -18,7 +18,7 @@ RUN go build -o ./cos
 
 FROM ysicing/debian
 
-COPY --from=gobuild /go/src/cmd/cos /bin/
+COPY --from=builder /go/src/cmd/cos /bin/
 
 COPY entrypoint.sh /entrypoint.sh
 

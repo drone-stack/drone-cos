@@ -1,13 +1,18 @@
 #!/bin/sh
+
 set -eu
 
-[ ! -z "$1" ] && (
+if [ ! -z "$1" ]; then 
     exec /bin/bash
-) 
+fi
 
-[ -z "${PLUGIN_DEBUG}" ] || set -x
+if [ ! -z "${PLUGIN_DEBUG}" ]; then
+	set -x
+fi
 
-[ -z "${PLUGIN_PAUSE}" ] || sleep 100000
+if [ ! -z "${PLUGIN_PAUSE}" ]; then 
+ 	sleep 100000
+fi
 
 if [ ! -z "${PLUGIN_PROXY}" ]; then
 	export http_proxy=${PLUGIN_PROXY}

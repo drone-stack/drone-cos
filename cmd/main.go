@@ -13,6 +13,12 @@ var (
 	version = "unknown"
 )
 
+func init() {
+	logrus.SetFormatter(&logrus.TextFormatter{})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.WarnLevel)
+}
+
 func main() {
 	// Load env-file if it exists first
 	if env := os.Getenv("PLUGIN_ENV_FILE"); env != "" {
@@ -29,49 +35,77 @@ func main() {
 			Name:   "bucket",
 			Usage:  "bucket name",
 			EnvVar: "PLUGIN_BUCKET",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "accesskey",
 			Usage:  "access key",
 			EnvVar: "PLUGIN_ACCESSKEY",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "secretkey",
 			Usage:  "secret key",
 			EnvVar: "PLUGIN_SECRETKEY",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "region",
 			Usage:  "region",
 			EnvVar: "PLUGIN_REGION",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "source",
 			Usage:  "source path",
 			EnvVar: "PLUGIN_SOURCE",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "target",
 			Usage:  "target path",
 			EnvVar: "PLUGIN_TARGET",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "strip-prefix",
 			Usage:  "strip prefix",
 			EnvVar: "PLUGIN_STRIP_PREFIX",
-			Value:  "",
 		},
 		cli.StringFlag{
 			Name:   "endpoint",
 			Usage:  "endpoint",
 			EnvVar: "PLUGIN_ENDPOINT",
-			Value:  "",
+		},
+		cli.StringFlag{
+			Name:   "include",
+			Usage:  "include",
+			EnvVar: "PLUGIN_INCLUDE",
+		},
+		cli.StringFlag{
+			Name:   "exclude",
+			Usage:  "exclude",
+			EnvVar: "PLUGIN_EXCLUDE",
+		},
+		cli.BoolFlag{
+			Name:   "autotime",
+			Usage:  "last modified time",
+			EnvVar: "PLUGIN_AUTOTIME",
+		},
+		// cli.BoolFlag{
+		// 	Name:   "debug",
+		// 	Usage:  "debug",
+		// 	EnvVar: "PLUGIN_DEBUG",
+		// },
+		// cli.BoolFlag{
+		// 	Name:   "pause",
+		// 	Usage:  "pause",
+		// 	EnvVar: "PLUGIN_PAUSE",
+		// },
+		// cli.StringFlag{
+		// 	Name:   "proxy",
+		// 	Usage:  "proxy",
+		// 	EnvVar: "PLUGIN_PROXY",
+		// },
+		cli.StringFlag{
+			Name:   "timeformat",
+			Usage:  "time format",
+			EnvVar: "PLUGIN_TIMEFORMAT",
+			Value:  "0102",
 		},
 	}
 
@@ -91,6 +125,15 @@ func run(c *cli.Context) error {
 			Target:      c.String("target"),
 			StripPrefix: c.String("strip-prefix"),
 			Endpoint:    c.String("endpoint"),
+			Include:     c.String("include"),
+			Exclude:     c.String("exclude"),
+		},
+		Ext: cos.Ext{
+			AutoTime:   c.Bool("autotime"),
+			TimeFormat: c.String("timeformat"),
+			// Debug:      c.Bool("debug"),
+			// Pause:      c.Bool("pause"),
+			// Proxy:      c.String("proxy"),
 		},
 	}
 
