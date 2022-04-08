@@ -127,7 +127,7 @@ func UploadPathFixed(localPath string, targetPath string) (string, string) {
 	// 1. ~/example/123.txt => cos://bucket/path/
 	s, err := os.Stat(localPath)
 	if err != nil {
-		logrus.Fatalln(err)
+		logrus.Fatal(err)
 		os.Exit(1)
 	}
 	if s.IsDir() {
@@ -188,7 +188,7 @@ func SingleUpload(c *cos.Client, sourcePath, bucketName, targetPath string, op *
 	logrus.Infof("Upload %s => cos://%s/%s\n", sourcePath, bucketName, targetPath)
 	_, _, err := c.Object.Upload(context.Background(), targetPath, sourcePath, opt)
 	if err != nil {
-		logrus.Fatalln(err)
+		logrus.Fatal(err)
 		os.Exit(1)
 	}
 }

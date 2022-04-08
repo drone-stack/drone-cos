@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	version = "unknown"
+	version = "0.0.1"
 )
 
 func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{})
 	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.WarnLevel)
+	logrus.SetLevel(logrus.DebugLevel)
 }
 
 func main() {
@@ -26,8 +26,8 @@ func main() {
 	}
 
 	app := cli.NewApp()
-	app.Name = "docker plugin"
-	app.Usage = "docker plugin"
+	app.Name = "drone cos plugin"
+	app.Usage = "drone cos plugin"
 	app.Action = run
 	app.Version = version
 	app.Flags = []cli.Flag{
@@ -138,8 +138,7 @@ func run(c *cli.Context) error {
 	}
 
 	if err := plugin.Exec(); err != nil {
-		logrus.Error(err)
-		os.Exit(1)
+		logrus.Fatal(err)
 	}
 	return nil
 }
