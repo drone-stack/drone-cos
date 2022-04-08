@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eu
+set -e
 
 if [ ! -z "${PLUGIN_DEBUG}" ]; then
 	set -x
