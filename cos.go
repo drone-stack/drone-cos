@@ -46,7 +46,9 @@ type (
 
 // Exec executes the plugin step
 func (p Plugin) Exec() error {
+	logrus.Info("start upload...")
 	p.upload()
+	logrus.Info("upload success")
 	return nil
 }
 
@@ -188,8 +190,7 @@ func SingleUpload(c *cos.Client, sourcePath, bucketName, targetPath string, op *
 	logrus.Infof("Upload %s => cos://%s/%s\n", sourcePath, bucketName, targetPath)
 	_, _, err := c.Object.Upload(context.Background(), targetPath, sourcePath, opt)
 	if err != nil {
-		logrus.Fatal(err)
-		os.Exit(1)
+		logrus.Errorf("upload: %s,err: %v", sourcePath, err)
 	}
 }
 
@@ -206,7 +207,6 @@ func MultiUpload(c *cos.Client, sourceDir, bucketName, targetDir, include, exclu
 	for _, f := range files {
 		sourcePath := sourceDir + f
 		targetPath := targetDir + f
-
 		SingleUpload(c, sourcePath, bucketName, targetPath, op)
 	}
 }

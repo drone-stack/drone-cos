@@ -24,4 +24,6 @@ COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh /bin/cos
 
-ENTRYPOINT ["/entrypoint.sh", "/bin/cos"]
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD [ "/bin/cos" ]

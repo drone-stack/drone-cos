@@ -10,12 +10,14 @@ import (
 )
 
 var (
-	version = "0.0.1"
+	version = "0.0.2"
 )
 
 func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{})
-	logrus.SetOutput(os.Stdout)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableTimestamp: true,
+		DisableColors:    true,
+	})
 	logrus.SetLevel(logrus.DebugLevel)
 }
 

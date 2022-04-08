@@ -2,10 +2,6 @@
 
 set -eu
 
-if [ ! -z "$1" ]; then 
-    exec /bin/bash
-fi
-
 if [ ! -z "${PLUGIN_DEBUG}" ]; then
 	set -x
 fi

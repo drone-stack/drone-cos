@@ -22,6 +22,7 @@ endpoint: cos.ap-shanghai.myqcloud.com
 > 路径不包含*, 类似`aaa`
 
 - PLUGIN_AUTOTIME 自动添加时间目录 如 `/aaa/` 则会自动添加 `/aaa/0407/`
+- PLUGIN_TIMEFORMAT Go时间格式 如 `0102`
 
 ## 使用示例
 
