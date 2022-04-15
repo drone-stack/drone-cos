@@ -195,14 +195,21 @@ func SingleUpload(c *cos.Client, sourcePath, bucketName, targetPath string, op *
 }
 
 func MultiUpload(c *cos.Client, sourceDir, bucketName, targetDir, include, exclude string, op *UploadOptions) {
-	if sourceDir != "" && (sourceDir[len(sourceDir)-1] != '/' && sourceDir[len(sourceDir)-1] != '\\') {
-		sourceDir += "/"
+	var files []string
+	if isDir(sourceDir) {
+		if sourceDir != "" && (sourceDir[len(sourceDir)-1] != '/' && sourceDir[len(sourceDir)-1] != '\\') {
+			sourceDir += "/"
+		}
+		files = GetLocalFilesListRecursive(sourceDir, include, exclude)
+	} else {
+		s := strings.Split(sourceDir, "/")
+		sourceDir = strings.TrimSuffix(sourceDir, s[len(s)-1])
+		files = append(files, s[len(s)-1])
 	}
+
 	if targetDir != "" && targetDir[len(targetDir)-1] != '/' {
 		targetDir += "/"
 	}
-
-	files := GetLocalFilesListRecursive(sourceDir, include, exclude)
 
 	for _, f := range files {
 		sourcePath := sourceDir + f
@@ -259,4 +266,13 @@ func MatchPattern(strs []string, pattern string, include bool) []string {
 		}
 	}
 	return res
+}
+
+// isDir 是否为目录
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
 }
